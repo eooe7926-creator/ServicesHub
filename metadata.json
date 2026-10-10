@@ -1,0 +1,6 @@
+{
+  "name": "كشري هاند | Koshary Hand",
+  "description": "قائمة طعام كشري هاند والطلب أونلاين بالدفع عبر فودافون كاش وتتبع التوصيل",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
