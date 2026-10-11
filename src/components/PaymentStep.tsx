@@ -115,7 +115,7 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
 
         {/* Title */}
         <div className="space-y-1">
-          <h2 className="text-2xl font-black text-stone-900">معلومات الدفع</h2>
+          <h2 className="text-2xl font-black text-stone-900">معلومات الدفع والإثبات</h2>
           <p className="text-xs text-stone-500">
             أكمل عملية التحويل وأرفق لقطة الشاشة لتأكيد خروج الطلب من الفرن
           </p>
@@ -174,21 +174,24 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
           <div className="space-y-4">
             <div className="p-4 sm:p-5 bg-gradient-to-br from-emerald-50 via-emerald-100/40 to-teal-50 border border-emerald-300/80 rounded-2xl space-y-3">
               <p className="text-xs text-emerald-950 font-bold">
-                يرجى تحويل المبلغ إلى رقم الكاش التالي:
+                يرجى تحويل المبلغ إلى الرقم الآتي:
               </p>
 
-              <div className="bg-white p-3.5 rounded-xl border border-emerald-300 shadow-xs flex items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="text-[11px] text-stone-500">رقم الكاش (فودافون كاش / انستاباي):</div>
-                  <div className="text-lg font-black font-mono text-emerald-900 tracking-wider" dir="ltr">
-                    {RESTAURANT_INFO.vodafoneCashNumber}
+              <div className="payment-info bg-amber-50/90 p-4 rounded-xl border border-amber-300 text-center shadow-xs flex items-center justify-between gap-3">
+                <div className="space-y-0.5 text-right">
+                  <div className="text-xs text-amber-950">
+                    <strong>رقم الكاش:</strong>{' '}
+                    <span className="font-mono font-black text-lg text-amber-900 mr-1" dir="ltr">
+                      {RESTAURANT_INFO.vodafoneCashNumber}
+                    </span>
                   </div>
+                  <div className="text-[11px] text-stone-500">فودافون كاش / انستاباي معتمد</div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleCopyCashNumber}
-                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xs transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
                 >
                   {copied ? (
                     <>
@@ -210,11 +213,11 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
               </div>
             </div>
 
-            {/* Prompt's instruction: "بعد التحويل، يرجى إرسال لقطة الشاشة للتأكيد." */}
+            {/* Prompt's instruction: "بعد التحويل، أرسل لقطة الشاشة للتأكيد." */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-stone-800" htmlFor="screenshot">
-                  بعد التحويل، يرجى إرسال لقطة الشاشة للتأكيد: <span className="text-red-500">*</span>
+                  بعد التحويل، يرجى رفع لقطة الشاشة للتأكيد: <span className="text-red-500">*</span>
                 </label>
                 <button
                   type="button"
@@ -305,7 +308,7 @@ export const PaymentStep: React.FC<PaymentStepProps> = ({
             type="submit"
             className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors cursor-pointer text-base"
           >
-            <span>إرسال الطلب ({grandTotal} ج.م)</span>
+            <span>تأكيد وإرسال الطلب ({grandTotal} ج.م)</span>
             <Check className="w-5 h-5 stroke-[2.5]" />
           </button>
         </form>

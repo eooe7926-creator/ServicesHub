@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Flame, ShoppingBag, ArrowLeft, Star, Clock } from 'lucide-react';
+import { Search, Flame, ShoppingBag, ArrowLeft, Star, Clock, AlertTriangle } from 'lucide-react';
 import { MenuItem, CategoryId, CartItem } from '../types';
 import { MENU_ITEMS, RESTAURANT_INFO } from '../data/menuData';
 
 interface MenuStepProps {
+  menuItems?: MenuItem[];
   onSelectItem: (item: MenuItem) => void;
   onQuickOrderHero: (item: MenuItem) => void;
   cart: CartItem[];
@@ -21,6 +22,7 @@ const CATEGORIES: { id: CategoryId; label: string }[] = [
 ];
 
 export const MenuStep: React.FC<MenuStepProps> = ({
+  menuItems = MENU_ITEMS,
   onSelectItem,
   onQuickOrderHero,
   cart,
@@ -32,18 +34,18 @@ export const MenuStep: React.FC<MenuStepProps> = ({
 
   // Primary hero item corresponding to user's prototype (كشري ٥٥ جنيهاً)
   const heroItem = useMemo(() => {
-    return MENU_ITEMS.find((item) => item.id === 'koshary-super') || MENU_ITEMS[0];
-  }, []);
+    return menuItems.find((item) => item.id === 'koshary-super') || menuItems[0];
+  }, [menuItems]);
 
   const filteredItems = useMemo(() => {
-    return MENU_ITEMS.filter((item) => {
+    return menuItems.filter((item) => {
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
       const matchesSearch =
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [menuItems, selectedCategory, searchQuery]);
 
   const cartTotal = cart.reduce((acc, i) => acc + i.itemTotal, 0);
   const cartCount = cart.reduce((acc, i) => acc + i.quantity, 0);
@@ -98,6 +100,7 @@ export const MenuStep: React.FC<MenuStepProps> = ({
                   <span>اطلب الآن</span>
                   <ArrowLeft className="w-4 h-4" />
                 </button>
+
                 <button
                   type="button"
                   onClick={() => onSelectItem(heroItem)}
@@ -202,78 +205,98 @@ export const MenuStep: React.FC<MenuStepProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl border border-stone-200 hover:border-amber-400/80 hover:shadow-lg transition-all duration-200 flex flex-col overflow-hidden group"
-              >
-                {/* Image */}
-                <div className="relative h-48 w-full bg-stone-100 overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                  {item.badge && (
-                    <span className="absolute top-2.5 right-2.5 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs">
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.servingSize && (
-                    <span className="absolute bottom-2 left-2 bg-stone-900/80 text-stone-100 text-[10px] px-2 py-0.5 rounded backdrop-blur-xs">
-                      {item.servingSize}
-                    </span>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-1.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-extrabold text-base text-stone-900 group-hover:text-amber-800 transition-colors">
-                        {item.name}
-                      </h3>
-                      <span className="font-black text-base text-amber-700 font-mono shrink-0">
-                        {item.price} ج.م
-                      </span>
-                    </div>
-                    <p className="text-xs text-stone-600 leading-relaxed line-clamp-2">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
-                    {item.calories && (
-                      <span className="text-[11px] text-stone-400 font-mono">
-                        {item.calories} سعرة
+            {filteredItems.map((item) => {
+              const isAvailable = item.available !== false;
+              return (
+                <div
+                  key={item.id}
+                  className={`bg-white rounded-2xl border transition-all duration-200 flex flex-col overflow-hidden group ${
+                    isAvailable
+                      ? 'border-stone-200 hover:border-amber-400/80 hover:shadow-lg'
+                      : 'border-stone-200 opacity-60 bg-stone-50'
+                  }`}
+                >
+                  {/* Image */}
+                  <div className="relative h-48 w-full bg-stone-100 overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    {item.badge && (
+                      <span className="absolute top-2.5 right-2.5 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs">
+                        {item.badge}
                       </span>
                     )}
+                    {!isAvailable && (
+                      <span className="absolute top-2.5 left-2.5 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs">
+                        غير متوفر حالياً
+                      </span>
+                    )}
+                    {item.servingSize && (
+                      <span className="absolute bottom-2 left-2 bg-stone-900/80 text-stone-100 text-[10px] px-2 py-0.5 rounded backdrop-blur-xs">
+                        {item.servingSize}
+                      </span>
+                    )}
+                  </div>
 
-                    <div className="flex items-center gap-1.5 ml-auto">
-                      {item.customizable ? (
-                        <button
-                          type="button"
-                          onClick={() => onSelectItem(item)}
-                          className="bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs px-3 py-2 rounded-xl transition-colors cursor-pointer"
-                        >
-                          تخصيص
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => onQuickOrderHero(item)}
-                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>اطلب الآن</span>
-                      </button>
+                  {/* Content */}
+                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-extrabold text-base text-stone-900 group-hover:text-amber-800 transition-colors">
+                          {item.name}
+                        </h3>
+                        <span className="font-black text-base text-amber-700 font-mono shrink-0">
+                          {item.price} ج.م
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-600 leading-relaxed line-clamp-2">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 border-t border-stone-100 flex items-center justify-between gap-2">
+                      {item.calories && (
+                        <span className="text-[11px] text-stone-400 font-mono">
+                          {item.calories} سعرة
+                        </span>
+                      )}
+
+                      <div className="flex items-center gap-1.5 ml-auto">
+                        {isAvailable ? (
+                          <>
+                            {item.customizable ? (
+                              <button
+                                type="button"
+                                onClick={() => onSelectItem(item)}
+                                className="bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs px-3 py-2 rounded-xl transition-colors cursor-pointer"
+                              >
+                                تخصيص
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => onQuickOrderHero(item)}
+                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                            >
+                              <ShoppingBag className="w-3.5 h-3.5" />
+                              <span>اطلب الآن</span>
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-xs text-red-600 font-bold px-3 py-1.5 bg-red-50 rounded-xl">
+                            نفذ من المطبخ
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

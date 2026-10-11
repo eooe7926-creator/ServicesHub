@@ -15,6 +15,9 @@ import { CartDrawer } from './components/CartDrawer';
 import { ItemModal } from './components/ItemModal';
 import { MyOrdersModal } from './components/MyOrdersModal';
 import { AdminOrdersModal } from './components/AdminOrdersModal';
+import { PublishGuideModal } from './components/PublishGuideModal';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { usePWAInstall } from './hooks/usePWAInstall';
 import {
   MenuItem,
   CartItem,
@@ -24,6 +27,8 @@ import {
   PaymentMethod,
   Order,
   OrderStatus,
+  PromoCode,
+  RegisteredAccount,
 } from './types';
 import { MENU_ITEMS, RESTAURANT_INFO, CAIRO_AREAS } from './data/menuData';
 
@@ -33,6 +38,7 @@ const INITIAL_PROFILE: UserProfile = {
   phone: '',
   isLoggedIn: false,
   rememberMe: true,
+  provider: 'guest',
 };
 
 const INITIAL_DELIVERY: DeliveryDetails = {
@@ -48,12 +54,92 @@ const INITIAL_DELIVERY: DeliveryDetails = {
   deliveryType: 'immediate',
 };
 
+const DEFAULT_PROMO_CODES: PromoCode[] = [
+  {
+    code: 'HAND10',
+    type: 'percent',
+    value: 10,
+    active: true,
+    description: 'خصم ١٠٪ على جميع الطلبات',
+  },
+  {
+    code: 'EGYPT',
+    type: 'fixed',
+    value: 15,
+    active: true,
+    description: 'خصم مصاريف التوصيل (-١٥ ج.م)',
+  },
+  {
+    code: 'KOSHARY',
+    type: 'fixed',
+    value: 15,
+    active: true,
+    description: 'خصم فوري لعشاق الكشري (-١٥ ج.م)',
+  },
+];
+
+const DEFAULT_USERS: RegisteredAccount[] = [
+  {
+    id: 'user-demo-1',
+    fullName: 'كريم محمود',
+    phone: '01065432198',
+    email: 'karim@gmail.com',
+    provider: 'google',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    totalOrdersCount: 3,
+    totalSpent: 420,
+  },
+  {
+    id: 'user-demo-2',
+    fullName: 'سارة علي',
+    phone: '01123456789',
+    email: 'sarah.aly@gmail.com',
+    provider: 'email',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    totalOrdersCount: 1,
+    totalSpent: 170,
+  },
+];
+
 export default function App() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [discount, setDiscount] = useState(0);
+
+  // Dynamic menu items (synced with admin panel)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('koshary_menu_items');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return MENU_ITEMS;
+  });
+
+  // Dynamic promo codes (synced with admin panel)
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>(() => {
+    try {
+      const saved = localStorage.getItem('koshary_promo_codes');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return DEFAULT_PROMO_CODES;
+  });
+
+  // Registered customer accounts (persisted in local DB)
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredAccount[]>(() => {
+    try {
+      const saved = localStorage.getItem('koshary_registered_users');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+    return DEFAULT_USERS;
+  });
 
   // User & delivery state
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -82,7 +168,6 @@ export default function App() {
     } catch {
       // fallback
     }
-    // Seed with 1 initial sample order for realistic preview
     return [
       {
         id: 'ord-sample-1',
@@ -124,7 +209,7 @@ export default function App() {
           },
           {
             cartItemId: 'item-demo-2',
-            menuItem: MENU_ITEMS[10], // Roz bel laban
+            menuItem: MENU_ITEMS[10],
             quantity: 2,
             options: {
               size: 'medium',
@@ -169,6 +254,10 @@ export default function App() {
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [isMyOrdersOpen, setIsMyOrdersOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isPublishGuideOpen, setIsPublishGuideOpen] = useState(false);
+
+  // PWA Install hook
+  const { isInstallable, install } = usePWAInstall();
 
   // Sync to localStorage
   useEffect(() => {
@@ -178,6 +267,30 @@ export default function App() {
       // ignore
     }
   }, [orders]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('koshary_menu_items', JSON.stringify(menuItems));
+    } catch {
+      // ignore
+    }
+  }, [menuItems]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('koshary_promo_codes', JSON.stringify(promoCodes));
+    } catch {
+      // ignore
+    }
+  }, [promoCodes]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('koshary_registered_users', JSON.stringify(registeredUsers));
+    } catch {
+      // ignore
+    }
+  }, [registeredUsers]);
 
   useEffect(() => {
     try {
@@ -195,7 +308,18 @@ export default function App() {
     }
   }, [deliveryDetails]);
 
-  // If activeOrder is set and updated in orders, keep it synchronized
+  // If user profile updates, prefill delivery details
+  useEffect(() => {
+    if (userProfile.fullName && !deliveryDetails.fullName) {
+      setDeliveryDetails((prev) => ({
+        ...prev,
+        fullName: userProfile.fullName,
+        phone: userProfile.phone || prev.phone,
+      }));
+    }
+  }, [userProfile]);
+
+  // Keep activeOrder synchronized with orders list
   useEffect(() => {
     if (activeOrder) {
       const match = orders.find((o) => o.id === activeOrder.id);
@@ -223,7 +347,6 @@ export default function App() {
     setIsCartOpen(true);
   };
 
-  // Quick 1-click order for hero item (matching prompt's "كشري ب ٥٥ جنيهاً - اطلب الآن")
   const handleQuickOrderHero = (item: MenuItem) => {
     const defaultOption: CartItemOption = {
       size: 'medium',
@@ -247,7 +370,6 @@ export default function App() {
         itemTotal: item.price,
       },
     ]);
-    // Directly advance to Step 2 (تسجيل الدخول للطلب) as in the user's wireframe!
     setCurrentStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -279,17 +401,21 @@ export default function App() {
 
   const handleApplyPromoCode = (code: string) => {
     const clean = code.trim().toUpperCase();
-    if (clean === 'HAND10') {
+    const match = promoCodes.find((p) => p.code === clean && p.active);
+
+    if (match) {
       const sub = cart.reduce((acc, i) => acc + i.itemTotal, 0);
-      const disc = Math.round(sub * 0.1);
+      let disc = 0;
+      if (match.type === 'percent') {
+        disc = Math.round(sub * (match.value / 100));
+      } else {
+        disc = match.value;
+      }
       setDiscount(disc);
-      return { success: true, message: `تم تطبيق خصم ١٠٪ (-${disc} ج.م)` };
+      return { success: true, message: `تم تطبيق كود الخصم (${match.description}) بنجاح (-${disc} ج.م)` };
     }
-    if (clean === 'EGYPT' || clean === 'KOSHARY') {
-      setDiscount(15);
-      return { success: true, message: 'تم تطبيق خصم التوصيل المجاني (-١٥ ج.م)' };
-    }
-    return { success: false, message: 'كود الخصم غير صحيح أو منتهي الصلاحية' };
+
+    return { success: false, message: 'كود الخصم غير صحيح أو غير مفعل حالياً' };
   };
 
   // Step navigation rules
@@ -347,6 +473,39 @@ export default function App() {
     };
 
     setOrders((prev) => [newOrder, ...prev]);
+
+    // Update registered user spent metrics
+    if (deliveryDetails.phone) {
+      setRegisteredUsers((prev) => {
+        const existingIdx = prev.findIndex(
+          (u) => u.phone === deliveryDetails.phone || (userProfile.email && u.email === userProfile.email)
+        );
+        if (existingIdx !== -1) {
+          const updated = [...prev];
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            totalOrdersCount: updated[existingIdx].totalOrdersCount + 1,
+            totalSpent: updated[existingIdx].totalSpent + total,
+          };
+          return updated;
+        } else {
+          return [
+            ...prev,
+            {
+              id: `user-${Date.now()}`,
+              fullName: deliveryDetails.fullName,
+              phone: deliveryDetails.phone,
+              email: userProfile.email || '',
+              provider: userProfile.provider || 'phone',
+              createdAt: new Date().toISOString(),
+              totalOrdersCount: 1,
+              totalSpent: total,
+            },
+          ];
+        }
+      });
+    }
+
     setActiveOrder(newOrder);
     setCart([]);
     setDiscount(0);
@@ -366,7 +525,7 @@ export default function App() {
               {
                 status: newStatus,
                 timestamp: new Date().toISOString(),
-                note: `تم تغيير الحالة إلى: ${newStatus}`,
+                note: `تم تغيير المرحلة إلى: ${newStatus}`,
               },
             ],
           };
@@ -374,6 +533,26 @@ export default function App() {
         return o;
       })
     );
+  };
+
+  const handleDeleteOrder = (orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    if (activeOrder?.id === orderId) {
+      setActiveOrder(null);
+    }
+  };
+
+  const handleRegisterAccount = (account: RegisteredAccount) => {
+    setRegisteredUsers((prev) => {
+      const exists = prev.some((u) => u.email === account.email || u.phone === account.phone);
+      if (exists) return prev;
+      return [account, ...prev];
+    });
+  };
+
+  const handleLogoutUser = () => {
+    setUserProfile(INITIAL_PROFILE);
+    localStorage.removeItem('koshary_user_profile');
   };
 
   const handleSelectPastOrder = (order: Order) => {
@@ -384,9 +563,13 @@ export default function App() {
 
   const cartTotal = cart.reduce((acc, i) => acc + i.itemTotal, 0);
   const cartCount = cart.reduce((acc, i) => acc + i.quantity, 0);
+  const activeOrdersCount = orders.filter((o) => o.status !== 'delivered' && o.status !== 'cancelled').length;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-stone-900 font-sans selection:bg-amber-200 selection:text-amber-950">
+      {/* PWA & Free Publication Alert Strip */}
+      <PWAInstallBanner onOpenPublishGuide={() => setIsPublishGuideOpen(true)} />
+
       {/* Top Header */}
       <Header
         cartCount={cartCount}
@@ -394,7 +577,11 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
         onOpenMyOrders={() => setIsMyOrdersOpen(true)}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenPublishGuide={() => setIsPublishGuideOpen(true)}
         ordersCount={orders.length}
+        activeOrdersCount={activeOrdersCount}
+        userProfile={userProfile}
+        onLogoutUser={handleLogoutUser}
       />
 
       {/* Breadcrumb Stepper */}
@@ -412,14 +599,14 @@ export default function App() {
         {/* Step 1: Menu / Food Ordering */}
         {currentStep === 1 && (
           <MenuStep
+            menuItems={menuItems}
             onSelectItem={(item) => setSelectedMenuItem(item)}
             onQuickOrderHero={handleQuickOrderHero}
             cart={cart}
             onOpenCart={() => setIsCartOpen(true)}
             onProceedToStep2={() => {
               if (cart.length === 0) {
-                // if cart empty, add the default signature bowl
-                handleQuickOrderHero(MENU_ITEMS[0]);
+                handleQuickOrderHero(menuItems[0]);
               } else {
                 setCurrentStep(2);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -428,7 +615,7 @@ export default function App() {
           />
         )}
 
-        {/* Step 2: Login / Account */}
+        {/* Step 2: Login / Account (Multi-provider, completely free) */}
         {currentStep === 2 && (
           <LoginStep
             userProfile={userProfile}
@@ -442,6 +629,7 @@ export default function App() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             cart={cart}
+            onRegisterAccount={handleRegisterAccount}
           />
         )}
 
@@ -494,10 +682,15 @@ export default function App() {
       <footer className="mt-auto border-t border-stone-200/80 bg-white/70 py-6 text-center text-xs text-stone-500">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>
-            © {new Date().getFullYear()} {RESTAURANT_INFO.name} ({RESTAURANT_INFO.nameEn}) · جميع الحقوق محفوظة
+            © {new Date().getFullYear()} {RESTAURANT_INFO.name} ({RESTAURANT_INFO.nameEn}) · موقع ويب وتطبيق PWA جاهز للنشر المجاني
           </p>
-          <div className="flex items-center gap-4 text-[11px] text-stone-400">
-            <span>{RESTAURANT_INFO.openingHours}</span>
+          <div className="flex items-center gap-4 text-[11px] text-stone-500">
+            <button
+              onClick={() => setIsPublishGuideOpen(true)}
+              className="text-amber-800 font-bold hover:underline"
+            >
+              دليل النشر المجاني على جوجل 🚀
+            </button>
             <span>·</span>
             <span>الخط الساخن: {RESTAURANT_INFO.hotline}</span>
           </div>
@@ -539,6 +732,19 @@ export default function App() {
         onClose={() => setIsAdminOpen(false)}
         orders={orders}
         onUpdateStatus={handleUpdateOrderStatus}
+        onDeleteOrder={handleDeleteOrder}
+        menuItems={menuItems}
+        onUpdateMenuItems={setMenuItems}
+        promoCodes={promoCodes}
+        onUpdatePromoCodes={setPromoCodes}
+        registeredUsers={registeredUsers}
+      />
+
+      <PublishGuideModal
+        isOpen={isPublishGuideOpen}
+        onClose={() => setIsPublishGuideOpen(false)}
+        onInstallPWA={install}
+        isInstallable={isInstallable}
       />
     </div>
   );
