@@ -126,7 +126,7 @@ ${itemsList}
             تم إرسال الطلب بنجاح!
           </h2>
           <p className="text-sm font-medium text-stone-600">
-            سيتم التواصل معك قريباً لتأكيد الحجز والاستلام.
+            سيتم التواصل معك قريباً لتأكيد الحجز والتوصيل.
           </p>
         </div>
 
@@ -351,7 +351,7 @@ ${itemsList}
           className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors cursor-pointer text-xs sm:text-sm"
         >
           <RotateCcw className="w-4 h-4" />
-          <span>العودة للرئيسية (طلب جديد)</span>
+          <span>طلب وجبة جديدة من كشري هاند</span>
         </button>
 
         <button

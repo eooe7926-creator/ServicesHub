@@ -64,23 +64,12 @@ export const ItemModal: React.FC<ItemModalProps> = ({ item, onClose, onAddToCart
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs">
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-stone-200">
         {/* Header Image */}
-        <div className="relative h-52 w-full bg-stone-900 overflow-hidden flex items-center justify-center">
-          {item.image ? (
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src =
-                  'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=400&q=80';
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-800 p-4">
-              <span className="text-3xl mb-1">🍲</span>
-              <span className="text-xs font-bold text-stone-300">{item.name}</span>
-            </div>
-          )}
+        <div className="relative h-52 w-full bg-stone-100 overflow-hidden">
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
           <button
             onClick={onClose}
             className="absolute top-3 left-3 bg-white/90 hover:bg-white text-stone-700 p-2 rounded-full shadow-md transition-colors"

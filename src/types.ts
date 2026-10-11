@@ -81,7 +81,7 @@ export interface Order {
   total: number;
   paymentMethod: PaymentMethod;
   paymentPhone: string;
-  paymentScreenshot?: string;
+  paymentScreenshot?: string; // base64 or object URL
   paymentProofName?: string;
   status: OrderStatus;
   statusUpdates: {
@@ -89,45 +89,4 @@ export interface Order {
     timestamp: string;
     note: string;
   }[];
-}
-
-export type UserRole = 'guest' | 'manager' | 'staff';
-
-export interface StaffPermissions {
-  menu: boolean;
-  orders: boolean;
-}
-
-export interface StaffAccount {
-  id: string;
-  email: string;
-  pass: string;
-  permissions: StaffPermissions;
-  createdAt: string;
-}
-
-export interface ActivityLog {
-  id: string;
-  user: string;
-  action: string;
-  time: string;
-  timestamp: number;
-}
-
-export interface DeliverySpecialist {
-  id: string;
-  name: string;
-  phone: string;
-  area: string;
-  vehicle: string;
-  isAvailable: boolean;
-}
-
-export interface StoreSettings {
-  customerServicePhone: string;
-  customerServiceWhatsapp: string;
-  deliveryManagerPhone: string;
-  deliverySpecialists: DeliverySpecialist[];
-  privacyPolicy: string;
-  termsOfService: string;
 }

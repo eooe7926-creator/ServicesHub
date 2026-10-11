@@ -76,7 +76,7 @@ export const LoginStep: React.FC<LoginStepProps> = ({
           <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 flex items-center justify-center text-amber-700 mb-2">
             <LogIn className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-black text-stone-900">تسجيل دخول العميل</h2>
+          <h2 className="text-2xl font-black text-stone-900">تسجيل الدخول للطلب</h2>
           <p className="text-xs text-stone-500">
             سجّل دخولك لحفظ بيانات التوصيل ومتابعة حالة وجباتك فوراً
           </p>
@@ -119,7 +119,7 @@ export const LoginStep: React.FC<LoginStepProps> = ({
                   setEmail(e.target.value);
                   setError(null);
                 }}
-                placeholder="البريد الإلكتروني"
+                placeholder="example@mail.com"
                 className="w-full text-xs pr-10 pl-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-colors"
                 autoComplete="email"
               />
@@ -141,7 +141,7 @@ export const LoginStep: React.FC<LoginStepProps> = ({
                   setPassword(e.target.value);
                   setError(null);
                 }}
-                placeholder="كلمة المرور"
+                placeholder="••••••••"
                 className="w-full text-xs pr-10 pl-3 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-colors"
                 autoComplete="current-password"
               />
@@ -166,7 +166,7 @@ export const LoginStep: React.FC<LoginStepProps> = ({
             type="submit"
             className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-colors cursor-pointer text-sm"
           >
-            <span>متابعة الطلب</span>
+            <span>دخول والمتابعة</span>
             <ArrowLeft className="w-4 h-4" />
           </button>
         </form>
